@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Info Hub</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app-container">
+      <aside class="sidebar">
+        <h2>InfoHub</h2>
+        <button
+          class="nav-item active"
+          data-type="trivia"
+          onclick="switchTab('trivia')"
+        >
+          Trivia
+        </button>
+        <button
+          class="nav-item"
+          data-type="travel"
+          onclick="switchTab('travel')"
+        >
+          Travel
+        </button>
+        <button
+          class="nav-item"
+          data-type="sports"
+          onclick="switchTab('sports')"
+        >
+          Sports
+        </button>
+        <button
+          class="nav-item"
+          data-type="movies"
+          onclick="switchTab('movies')"
+        >
+          Movies
+        </button>
+      </aside>
+
+      <main class="main-content">
+        <h1 id="page-title">Trivia Generator</h1>
+        <p id="page-desc">Discover fascinating facts about anything.</p>
+
+        <div class="input-box">
+          <input id="user-prompt" placeholder="Enter a topic..." />
+          <button onclick="fetchData()">Generate</button>
+        </div>
+
+        <div id="loading" class="hidden">Loading...</div>
+
+        <div id="error-container" class="hidden">
+          <strong id="error-title"></strong>
+          <p id="error-msg"></p>
+        </div>
+
+        <div id="results-grid" class="results-grid">
+          <div class="placeholder-msg">Enter something to begin ✨</div>
+        </div>
+      </main>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>
