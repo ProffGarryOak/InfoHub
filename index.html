@@ -38,15 +38,103 @@
         >
           Movies
         </button>
+        <button
+          class="nav-item"
+          data-type="configure"
+          onclick="switchTab('configure')"
+        >
+          Configure
+        </button>
       </aside>
 
       <main class="main-content">
-        <h1 id="page-title">Trivia Generator</h1>
-        <p id="page-desc">Discover fascinating facts about anything.</p>
+        <div id="standard-view">
+          <h1 id="page-title">Trivia Generator</h1>
+          <p id="page-desc">Discover fascinating facts about anything.</p>
 
-        <div class="input-box">
-          <input id="user-prompt" placeholder="Enter a topic..." />
-          <button onclick="fetchData()">Generate</button>
+          <div class="input-box">
+            <input id="user-prompt" placeholder="Enter a topic..." />
+            <button onclick="fetchData()">Generate</button>
+          </div>
+        </div>
+
+        <div id="configure-view" class="hidden">
+          <h1>Configure API</h1>
+          <p>Select an API and algorithm to process your data.</p>
+
+          <div class="config-container">
+            <div class="form-group">
+              <label>Select API Endpoint</label>
+              <select id="api-select">
+                <option value="trivia">Trivia</option>
+                <option value="travel">Travel</option>
+                <option value="sports">Sports</option>
+                <option value="movies">Movies</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label>Select Algorithm</label>
+              <select id="algo-select" onchange="updateAlgoFields()">
+                <option value="fixed-window">Fixed Window</option>
+                <option value="sliding-window">Sliding Window</option>
+                <option value="token-bucket">Token Bucket</option>
+              </select>
+            </div>
+
+            <div class="form-group grid-2">
+              <div>
+                <label>Limit</label>
+                <input
+                  id="conf-limit"
+                  type="number"
+                  data-field="limit"
+                  value="0"
+                />
+              </div>
+              <div>
+                <label>Window Size</label>
+                <input
+                  id="conf-windowSize"
+                  type="number"
+                  data-field="windowSize"
+                  value="0"
+                />
+              </div>
+            </div>
+
+            <div class="form-group grid-3">
+              <div>
+                <label>Capacity</label>
+                <input
+                  id="conf-capacity"
+                  type="number"
+                  data-field="capacity"
+                  value="0"
+                />
+              </div>
+              <div>
+                <label>Refill Rate</label>
+                <input
+                  id="conf-refillRate"
+                  type="number"
+                  data-field="refillRate"
+                  value="0"
+                />
+              </div>
+              <div>
+                <label>Refill Interval</label>
+                <input
+                  id="conf-refillInterval"
+                  type="number"
+                  data-field="refillInterval"
+                  value="0"
+                />
+              </div>
+            </div>
+
+            <button onclick="runConfiguration()">Execute</button>
+          </div>
         </div>
 
         <div id="loading" class="hidden">Loading...</div>

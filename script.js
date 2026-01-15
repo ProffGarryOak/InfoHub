@@ -1,5 +1,8 @@
 const API_BASE_URL = "https://rate-limiter-pomz.onrender.com/api";
 
+/* =========================
+   ENDPOINT DEFINITIONS
+========================= */
 const ENDPOINTS = {
   trivia: {
     url: "/trivia",
@@ -27,8 +30,14 @@ const ENDPOINTS = {
   },
 };
 
+/* =========================
+   STATE
+========================= */
 let currentTab = "trivia";
 
+/* =========================
+   DOM REFERENCES
+========================= */
 const userPrompt = document.getElementById("user-prompt");
 const resultsGrid = document.getElementById("results-grid");
 const loading = document.getElementById("loading");
@@ -37,11 +46,19 @@ const errorTitle = document.getElementById("error-title");
 const errorMsg = document.getElementById("error-msg");
 const pageTitle = document.getElementById("page-title");
 const pageDesc = document.getElementById("page-desc");
+const standardView = document.getElementById("standard-view");
+const configureView = document.getElementById("configure-view");
 
+/* =========================
+   EVENTS
+========================= */
 userPrompt.addEventListener("keydown", (e) => {
   if (e.key === "Enter") fetchData();
 });
 
+/* =========================
+   TAB SWITCHING
+========================= */
 function switchTab(tab) {
   currentTab = tab;
 
@@ -49,16 +66,30 @@ function switchTab(tab) {
     btn.classList.toggle("active", btn.dataset.type === tab);
   });
 
-  const activeTabData = ENDPOINTS[tab];
-  pageTitle.textContent = activeTabData.title;
-  pageDesc.textContent = activeTabData.desc;
-  userPrompt.placeholder = activeTabData.placeholder;
+  if (tab === "configure") {
+    standardView.classList.add("hidden");
+    configureView.classList.remove("hidden");
+    clearResults();
+    hideError();
+    return;
+  }
+
+  standardView.classList.remove("hidden");
+  configureView.classList.add("hidden");
+
+  const data = ENDPOINTS[tab];
+  pageTitle.textContent = data.title;
+  pageDesc.textContent = data.desc;
+  userPrompt.placeholder = data.placeholder;
   userPrompt.value = "";
 
   clearResults();
   hideError();
 }
 
+/* =========================
+   DATA FETCH (GET APIs)
+========================= */
 async function fetchData() {
   const prompt = userPrompt.value.trim();
   if (!prompt) {
@@ -70,81 +101,89 @@ async function fetchData() {
   hideError();
   clearResults();
 
-  const config = ENDPOINTS[currentTab];
-  const url = `${API_BASE_URL}${config.url}?prompt=${encodeURIComponent(
-    prompt
-  )}`;
+  const { url } = ENDPOINTS[currentTab];
+  const fullUrl = `${API_BASE_URL}${url}?prompt=${encodeURIComponent(prompt)}`;
 
   try {
-    const response = await fetch(url);
-    if (response.status === 429) {
-      showError(
-        "Rate Limit Exceeded 🚦",
-        "Too many requests. Please wait a few seconds and try again."
-      );
+    const res = await fetch(fullUrl);
+
+    if (res.status === 429) {
+      showError("Rate Limit Exceeded 🚦", "Please wait and try again.");
       return;
     }
 
-    if (!response.ok) {
-      showError(
-        "Server Error",
-        `Request failed with status ${response.status}`
-      );
+    if (!res.ok) {
+      showError("Server Error", `Status ${res.status}`);
       return;
     }
 
-    const json = await response.json();
-
-    let data;
-    if (typeof json.data === "string") {
-      try {
-        data = JSON.parse(json.data);
-      } catch {
-        data = json.data;
-      }
-    } else {
-      data = json.data;
-    }
-
-    renderResults(data);
-  } catch (err) {
-    if (err instanceof TypeError) {
-      showError(
-        "Rate Limit Exceeded 🚦",
-        "Too many requests. Please wait a few seconds and try again."
-      );
-    } else {
-      showError(
-        "Network Error",
-        "Unable to reach the server. Please try again later."
-      );
-    }
+    const json = await res.json();
+    renderResults(json.data);
+  } catch {
+    showError("Network Error", "Unable to reach server.");
   } finally {
     showLoading(false);
   }
 }
 
-function renderResults(data) {
-  if (!data || typeof data === "string") {
+/* =========================
+   CONFIGURE RATE LIMIT (POST)
+========================= */
+async function runConfiguration() {
+  const api = document.getElementById("api-select").value;
+  const algorithm = document.getElementById("algo-select").value;
+
+  const payload = {
+    url: `${API_BASE_URL}${ENDPOINTS[api].url}`,
+    algorithm,
+    limit: Number(document.getElementById("conf-limit").value) || 0,
+    windowSize: Number(document.getElementById("conf-windowSize").value) || 0,
+    capacity: Number(document.getElementById("conf-capacity").value) || 0,
+    refillRate: Number(document.getElementById("conf-refillRate").value) || 0,
+    refillInterval:
+      Number(document.getElementById("conf-refillInterval").value) || 0,
+  };
+
+  showLoading(true);
+  hideError();
+  clearResults();
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/urls`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      showError("Configuration Failed 💥", `Status ${res.status}`);
+      return;
+    }
+
     resultsGrid.innerHTML = `
       <div class="placeholder-msg">
-        ${data || "The AI could not help with this request."}
+        ✅ Rate limiting configured successfully
       </div>
     `;
-    return;
+  } catch {
+    showError("Network Error", "Could not reach backend.");
+  } finally {
+    showLoading(false);
   }
-  if (Array.isArray(data) && typeof data[0] === "string") {
-    resultsGrid.innerHTML = `
-      <div class="placeholder-msg">
-        ${data[0]}
-      </div>
-    `;
+}
+
+/* =========================
+   UI HELPERS
+========================= */
+function renderResults(data) {
+  if (!data) {
+    resultsGrid.innerHTML =
+      '<div class="placeholder-msg">No results found.</div>';
     return;
   }
 
-  if (!Array.isArray(data) || data.length === 0) {
-    resultsGrid.innerHTML =
-      '<div class="placeholder-msg">No results found.</div>';
+  if (typeof data === "string") {
+    resultsGrid.innerHTML = `<div class="placeholder-msg">${data}</div>`;
     return;
   }
 
@@ -153,15 +192,14 @@ function renderResults(data) {
     card.className = "card";
 
     card.innerHTML = `
-      <h3>${item.name || item.title || item.destination || "Result"}</h3>
+      <h3>${item.name || item.title || "Result"}</h3>
       ${Object.entries(item)
         .map(
-          ([key, value]) => `
-          <div class="data-row">
-            <span class="data-key">${formatKey(key)}:</span>
-            ${Array.isArray(value) ? value.join(", ") : value}
-          </div>
-        `
+          ([k, v]) => `
+        <div class="data-row">
+          <span class="data-key">${formatKey(k)}:</span>
+          ${Array.isArray(v) ? v.join(", ") : v}
+        </div>`
         )
         .join("")}
     `;
