@@ -76,13 +76,12 @@
             <div class="form-group">
               <label>Select Algorithm</label>
               <select id="algo-select" onchange="updateAlgoFields()">
-                <option value="fixed-window">Fixed Window</option>
-                <option value="sliding-window">Sliding Window</option>
-                <option value="token-bucket">Token Bucket</option>
+                <option value="FIXED_WINDOW">Fixed Window</option>
+                <option value="TOKEN_BUCKET">Token Bucket</option>
               </select>
             </div>
 
-            <div class="form-group grid-2">
+            <div id="fixed-window-fields" class="form-group grid-2">
               <div>
                 <label>Limit</label>
                 <input
@@ -103,7 +102,7 @@
               </div>
             </div>
 
-            <div class="form-group grid-3">
+            <div id="token-bucket-fields" class="form-group grid-3 hidden">
               <div>
                 <label>Capacity</label>
                 <input

@@ -71,6 +71,7 @@ function switchTab(tab) {
     configureView.classList.remove("hidden");
     clearResults();
     hideError();
+    updateAlgoFields();
     return;
   }
 
@@ -134,7 +135,7 @@ async function runConfiguration() {
   const algorithm = document.getElementById("algo-select").value;
 
   const payload = {
-    url: `${API_BASE_URL}${ENDPOINTS[api].url}`,
+    url: `/api${ENDPOINTS[api].url}`,
     algorithm,
     limit: Number(document.getElementById("conf-limit").value) || 0,
     windowSize: Number(document.getElementById("conf-windowSize").value) || 0,
@@ -211,6 +212,38 @@ function renderResults(data) {
 function formatKey(key) {
   return key.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
+
+/* =========================
+   ALGORITHM FIELD LOGIC
+========================= */
+function updateAlgoFields() {
+  const algo = document.getElementById("algo-select").value;
+
+  const fixedFields = document.getElementById("fixed-window-fields");
+  const tokenFields = document.getElementById("token-bucket-fields");
+
+  if (algo === "FIXED_WINDOW") {
+    fixedFields.style.display = "grid";
+    tokenFields.style.display = "none";
+
+    // reset token bucket values
+    document.getElementById("conf-capacity").value = 0;
+    document.getElementById("conf-refillRate").value = 0;
+    document.getElementById("conf-refillInterval").value = 0;
+  } else {
+    fixedFields.style.display = "none";
+    tokenFields.style.display = "grid";
+
+    // reset fixed window values
+    document.getElementById("conf-limit").value = 0;
+    document.getElementById("conf-windowSize").value = 0;
+  }
+}
+
+// Initialize fields on load
+document.addEventListener("DOMContentLoaded", () => {
+  updateAlgoFields();
+});
 
 function showLoading(show) {
   loading.classList.toggle("hidden", !show);
